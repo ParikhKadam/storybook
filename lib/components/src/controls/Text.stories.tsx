@@ -10,12 +10,14 @@ const Template = (initialValue?: string) => {
   const [value, setValue] = useState(initialValue);
   return (
     <>
-      <TextControl name="Text" value={value} onChange={(name, newVal) => setValue(newVal)} />
-      <p>{value}</p>
+      <TextControl name="Text" value={value} onChange={(newVal) => setValue(newVal)} />
+      <pre>{JSON.stringify(value) || 'undefined'}</pre>
     </>
   );
 };
 
 export const Basic = () => Template('Hello text');
+
+export const Empty = () => Template('');
 
 export const Undefined = () => Template(undefined);

@@ -10,13 +10,15 @@ const Template = (initialValue: any) => {
   const [value, setValue] = useState(initialValue);
   return (
     <>
-      <ObjectControl name="object" value={value} onChange={(name, newVal) => setValue(newVal)} />
-      <p>{value && JSON.stringify(value)}</p>
+      <ObjectControl name="object" value={value} onChange={(newVal) => setValue(newVal)} />
+      <pre>{JSON.stringify(value) || 'undefined'}</pre>
     </>
   );
 };
 
 export const Basic = () => Template({ name: 'Michael', nested: { something: true } });
+
+export const Empty = () => Template({});
 
 export const Null = () => Template(null);
 
@@ -30,7 +32,7 @@ export const ValidatedAsArray = () => {
         name="object"
         argType={{ type: { name: 'array' } }}
         value={value}
-        onChange={(name, newVal) => setValue(newVal)}
+        onChange={(newVal) => setValue(newVal)}
       />
       <p>{value && JSON.stringify(value)}</p>
     </>

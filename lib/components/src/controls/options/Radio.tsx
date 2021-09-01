@@ -1,7 +1,9 @@
 import React, { FC } from 'react';
 import { styled } from '@storybook/theming';
+import { logger } from '@storybook/client-logger';
 import { ControlProps, OptionsSingleSelection, NormalizedOptionsConfig } from '../types';
 import { selectedKey } from './helpers';
+import { getControlId } from '../helpers';
 
 const Wrapper = styled.div<{ isInline: boolean }>(({ isInline }) =>
   isInline
@@ -48,19 +50,25 @@ const Label = styled.label({
 type RadioConfig = NormalizedOptionsConfig & { isInline: boolean };
 type RadioProps = ControlProps<OptionsSingleSelection> & RadioConfig;
 export const RadioControl: FC<RadioProps> = ({ name, options, value, onChange, isInline }) => {
+  if (!options) {
+    logger.warn(`Radio with no options: ${name}`);
+    return <>-</>;
+  }
   const selection = selectedKey(value, options);
+  const controlId = getControlId(name);
+
   return (
     <Wrapper isInline={isInline}>
-      {Object.keys(options).map((key) => {
-        const id = `${name}-${key}`;
+      {Object.keys(options).map((key, index) => {
+        const id = `${controlId}-${index}`;
         return (
           <Label key={id} htmlFor={id}>
             <input
               type="radio"
               id={id}
-              name={name}
+              name={id}
               value={key}
-              onChange={(e) => onChange(name, options[e.currentTarget.value])}
+              onChange={(e) => onChange(options[e.currentTarget.value])}
               checked={key === selection}
             />
             <Text>{key}</Text>

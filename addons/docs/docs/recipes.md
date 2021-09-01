@@ -14,8 +14,10 @@
   - [DocsPage](#docspage)
   - [MDX Stories](#mdx-stories)
 - [Controlling a story's view mode](#controlling-a-storys-view-mode)
+- [Reordering Docs tab first](#reordering-docs-tab-first)
 - [Customizing source snippets](#customizing-source-snippets)
 - [Overwriting docs container](#overwriting-docs-container)
+- [Add description to individual stories](#add-description-to-individual-stories)
 - [More resources](#more-resources)
 
 ## Component Story Format (CSF) with DocsPage
@@ -30,7 +32,7 @@ If you want to intersperse longform documentation in your Storybook, for example
 
 ## Mixed CSF / MDX Stories
 
-Can't decide between CSF and MDX? In transition? Or have did you find that each format has its own use? There's nothing stopping you from keeping some of your stories in CSF and some in MDX. And if you want to migrate one way or another, the [csf-to-mdx and mdx-to-csf codemod migrations](https://github.com/storybookjs/storybook/blob/next/lib/codemod/README.md) can help.
+Can't decide between CSF and MDX? In transition? Or have you found that each format has its own use? There's nothing stopping you from keeping some of your stories in CSF and some in MDX. And if you want to migrate one way or another, the [csf-to-mdx and mdx-to-csf codemod migrations](https://github.com/storybookjs/storybook/blob/next/lib/codemod/README.md) can help.
 
 The only limitation is that your exported titles (CSF: `default.title`, MDX `Meta.title`) should be unique across files. Loading will fail if there are duplicate titles.
 
@@ -60,8 +62,8 @@ basic.parameters = {
 **Button.stories.mdx**
 
 ```md
-import { Meta, Story } from '@storybook/addon-docs/blocks';
-import * as stories from './Button.stories.js';
+import { Meta, Story } from '@storybook/addon-docs';
+import \* as stories from './Button.stories.js';
 import { SomeComponent } from 'path/to/SomeComponent';
 
 <Meta title="Demo/Button" component={Button} />
@@ -70,7 +72,7 @@ import { SomeComponent } from 'path/to/SomeComponent';
 
 I can define a story with the function imported from CSF:
 
-<Story name="basic">{stories.basic()}</Story>
+<Story story={stories.basic} />
 
 And I can also embed arbitrary markdown & JSX in this file.
 
@@ -80,7 +82,8 @@ And I can also embed arbitrary markdown & JSX in this file.
 What's happening here:
 
 - Your stories are defined in CSF, but because of `includeStories: []`, they are not actually added to Storybook.
-- The MDX file is simply importing stories as functions in the MDX, and other aspects of the CSF file, such as decorators, parameters, and any other metadata should be applied as needed in the MDX from the import.
+- The named story exports are annotated with story-level decorators, parameters, args, and the `<Story story={}>` construct respects this.
+- All component-level decorators, parameters, etc. from `Button.stories` default export must be manually copied over into `<Meta>` if desired.
 
 ## CSF Stories with arbitrary MDX
 
@@ -89,7 +92,7 @@ We recommend [MDX Docs](#csf-stories-with-mdx-docs) as the most ergonomic way to
 **Button.mdx**
 
 ```md
-import { Story } from '@storybook/addon-docs/blocks';
+import { Story } from '@storybook/addon-docs';
 import { SomeComponent } from 'somewhere';
 
 # Button
@@ -227,13 +230,26 @@ Foo.parameters = {
 };
 ```
 
-This can also be applied globally in `preview.js`:
+This can also be applied globally in `.storybook/preview.js`:
 
 ```js
 // always reset the view mode to "docs" whenever the user navigates
-addParameters({
+export const parameters = {
   viewMode: 'docs',
-});
+};
+```
+
+## Reordering Docs tab first
+
+You can configure Storybook's preview tabs with the `previewTabs` story parameter.
+
+Here's how to show the `Docs` tab first for a story (or globally in `.storybook/preview.js`):
+
+```js
+export const Foo = () => <Component />;
+Foo.parameters = {
+  previewTabs: { 'storybook/docs/panel': { index: -1 } },
+};
 ```
 
 ## Customizing source snippets
@@ -255,7 +271,7 @@ Alternatively, you can provide a function in the `docs.transformSource` paramete
 const SOURCE_REGEX = /^\(\) => `(.*)`$/;
 export const parameters = {
   docs: {
-    transformSource: (src, storyId) => {
+    transformSource: (src, storyContext) => {
       const match = SOURCE_REGEX.exec(src);
       return match ? match[1] : src;
     },
@@ -269,12 +285,12 @@ These two methods are complementary. The former is useful for story-specific, an
 
 What happens if you want to add some wrapper for your MDX page, or add some other kind of React context?
 
-When you're writing stories you can do this by adding a [decorator](https://storybook.js.org/docs/basics/writing-stories/#decorators), but when you're adding arbitrary JSX to your MDX documentation outside of a `<Story>` block, decorators no longer apply, and you need to use the `docs.container` parameter.
+When you're writing stories you can do this by adding a [decorator](https://storybook.js.org/docs/react/writing-stories/decorators), but when you're adding arbitrary JSX to your MDX documentation outside of a `<Story>` block, decorators no longer apply, and you need to use the `docs.container` parameter.
 
 The closest Docs equivalent of a decorator is the `container`, a wrapper element that is rendered around the page that is being rendered. Here's an example of adding a solid red border around the page. It uses Storybook's default page container (that sets up various contexts and other magic) and then inserts its own logic between that container and the contents of the page:
 
 ```js
-import { Meta, DocsContainer } from '@storybook/addon-docs/blocks';
+import { Meta, DocsContainer } from '@storybook/addon-docs';
 
 <Meta
   title="Addons/Docs/container-override"
@@ -297,7 +313,7 @@ Rest of your file...
 This is especially useful if you are using `styled-components` and need to wrap your JSX with a `ThemeProvider` to have access to your theme:
 
 ```js
-import { Meta, DocsContainer } from '@storybook/addon-docs/blocks';
+import { Meta, DocsContainer } from '@storybook/addon-docs';
 import { ThemeProvider } from 'styled-components'
 import { theme } from '../path/to/theme'
 
@@ -320,6 +336,24 @@ import { theme } from '../path/to/theme'
 
 Rest of your file...
 ```
+
+## Add description to individual stories
+
+Add `story` to `docs.description` parameter
+
+```js
+const Example = () => <Button />;
+
+Example.parameters = {
+  docs: {
+    description: {
+      story: "Individual story description, may contain `markdown` markup"
+    },
+  },
+};
+```
+
+There is also an webpack loader package that extracts descriptions from jsdoc comments [story-description-loader](https://www.npmjs.com/package/story-description-loader)
 
 ## More resources
 

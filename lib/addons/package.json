@@ -1,11 +1,11 @@
 {
   "name": "@storybook/addons",
-  "version": "6.0.0-rc.14",
+  "version": "6.4.0-alpha.33",
   "description": "Storybook addons store",
   "keywords": [
     "storybook"
   ],
-  "homepage": "https://github.com/storybookjs/storybook/tree/master/lib/addons",
+  "homepage": "https://github.com/storybookjs/storybook/tree/main/lib/addons",
   "bugs": {
     "url": "https://github.com/storybookjs/storybook/issues"
   },
@@ -14,43 +14,49 @@
     "url": "https://github.com/storybookjs/storybook.git",
     "directory": "lib/addons"
   },
+  "funding": {
+    "type": "opencollective",
+    "url": "https://opencollective.com/storybook"
+  },
   "license": "MIT",
-  "main": "dist/public_api.js",
-  "types": "dist/public_api.d.ts",
+  "sideEffects": false,
+  "main": "dist/cjs/public_api.js",
+  "module": "dist/esm/public_api.js",
+  "types": "dist/ts3.9/public_api.d.ts",
+  "typesVersions": {
+    "<3.8": {
+      "dist/ts3.9/*": [
+        "dist/ts3.4/*"
+      ]
+    }
+  },
   "files": [
     "dist/**/*",
     "README.md",
     "*.js",
-    "*.d.ts",
-    "ts3.5/**/*"
+    "*.d.ts"
   ],
   "scripts": {
     "prepare": "node ../../scripts/prepare.js"
   },
   "dependencies": {
-    "@storybook/api": "6.0.0-rc.14",
-    "@storybook/channels": "6.0.0-rc.14",
-    "@storybook/client-logger": "6.0.0-rc.14",
-    "@storybook/core-events": "6.0.0-rc.14",
-    "@storybook/router": "6.0.0-rc.14",
-    "@storybook/theming": "6.0.0-rc.14",
-    "core-js": "^3.0.1",
-    "global": "^4.3.2",
-    "regenerator-runtime": "^0.13.3"
+    "@storybook/api": "6.4.0-alpha.33",
+    "@storybook/channels": "6.4.0-alpha.33",
+    "@storybook/client-logger": "6.4.0-alpha.33",
+    "@storybook/core-events": "6.4.0-alpha.33",
+    "@storybook/router": "6.4.0-alpha.33",
+    "@storybook/theming": "6.4.0-alpha.33",
+    "core-js": "^3.8.2",
+    "global": "^4.4.0",
+    "regenerator-runtime": "^0.13.7"
   },
   "peerDependencies": {
-    "react": "*",
-    "react-dom": "*"
+    "react": "^16.8.0 || ^17.0.0",
+    "react-dom": "^16.8.0 || ^17.0.0"
   },
   "publishConfig": {
     "access": "public"
   },
-  "gitHead": "718fd4614223ebc427911ca5daba122205e63f55",
-  "typesVersions": {
-    "<=3.5": {
-      "*": [
-        "ts3.5/*"
-      ]
-    }
-  }
+  "gitHead": "269aa6d39991bd4002754fda53f45d3b3d34ba98",
+  "sbmodern": "dist/modern/public_api.js"
 }

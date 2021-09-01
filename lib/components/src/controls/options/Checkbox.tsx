@@ -1,7 +1,9 @@
 import React, { FC, ChangeEvent, useState, Fragment } from 'react';
 import { styled } from '@storybook/theming';
+import { logger } from '@storybook/client-logger';
 import { ControlProps, OptionsMultiSelection, NormalizedOptionsConfig } from '../types';
 import { selectedKeys, selectedValues } from './helpers';
+import { getControlId } from '../helpers';
 
 const Wrapper = styled.div<{ isInline: boolean }>(({ isInline }) =>
   isInline
@@ -48,6 +50,11 @@ export const CheckboxControl: FC<CheckboxProps> = ({
   onChange,
   isInline,
 }) => {
+  if (!options) {
+    logger.warn(`Checkbox with no options: ${name}`);
+    return <>-</>;
+  }
+
   const initial = selectedKeys(value, options);
   const [selected, setSelected] = useState(initial);
 
@@ -59,20 +66,22 @@ export const CheckboxControl: FC<CheckboxProps> = ({
     } else {
       updated.push(option);
     }
-    onChange(name, selectedValues(updated, options));
+    onChange(selectedValues(updated, options));
     setSelected(updated);
   };
 
+  const controlId = getControlId(name);
+
   return (
     <Wrapper isInline={isInline}>
-      {Object.keys(options).map((key: string) => {
-        const id = `${name}-${key}`;
+      {Object.keys(options).map((key, index) => {
+        const id = `${controlId}-${index}`;
         return (
           <Label key={id} htmlFor={id}>
             <input
               type="checkbox"
               id={id}
-              name={name}
+              name={id}
               value={key}
               onChange={handleChange}
               checked={selected?.includes(key)}

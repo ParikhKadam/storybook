@@ -1,84 +1,121 @@
-import React, { FunctionComponent, SyntheticEvent } from 'react';
-import { Tabs, IconButton, Icons } from '@storybook/components';
-import { useStorybookApi } from '@storybook/api';
+import { useStorybookApi, useStorybookState } from '@storybook/api';
+import { IconButton, Icons, FlexBar, TabBar, TabButton, ScrollArea } from '@storybook/components';
 import { Location, Route } from '@storybook/router';
 import { styled } from '@storybook/theming';
+import global from 'global';
+import React, { FunctionComponent, SyntheticEvent, Fragment } from 'react';
+
 import { AboutPage } from './about_page';
 import { ReleaseNotesPage } from './release_notes_page';
 import { ShortcutsPage } from './shortcuts_page';
+import { matchesModifiers, matchesKeyCode } from '../keybinding';
 
-const ABOUT = 'about';
-const SHORTCUTS = 'shortcuts';
-const RELEASE_NOTES = 'release-notes';
+const { document } = global;
 
-export const Wrapper = styled.div`
-  div[role='tabpanel'] {
-    height: 100%;
-  }
-`;
+const TabBarButton = React.memo<{
+  changeTab: (tab: string) => void;
+  id: string;
+  title: string;
+}>(({ changeTab, id, title }) => (
+  <Location>
+    {({ path }) => {
+      const active = path.includes(`settings/${id}`);
+      return (
+        <TabButton
+          id={`tabbutton-${id}`}
+          className={['tabbutton'].concat(active ? ['tabbutton-active'] : []).join(' ')}
+          type="button"
+          key="id"
+          active={active}
+          onClick={() => changeTab(id)}
+          role="tab"
+        >
+          {title}
+        </TabButton>
+      );
+    }}
+  </Location>
+));
 
-interface PureSettingsPagesProps {
-  activeTab: string;
-  changeTab: (tab: string) => {};
-  onClose: () => {};
-}
+const Content = styled(ScrollArea)(
+  {
+    position: 'absolute',
+    top: 40,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    overflow: 'auto',
+  },
+  ({ theme }) => ({
+    background: theme.background.content,
+  })
+);
 
-const PureSettingsPages: FunctionComponent<PureSettingsPagesProps> = ({
-  activeTab,
-  changeTab,
-  onClose,
-}) => (
-  <Wrapper>
-    <Tabs
-      absolute
-      selected={activeTab}
-      actions={{ onSelect: changeTab }}
-      tools={
+const Pages: FunctionComponent<{
+  onClose: () => void;
+  enableShortcuts?: boolean;
+  hasReleaseNotes?: boolean;
+  changeTab: (tab: string) => void;
+}> = ({ changeTab, onClose, enableShortcuts = true, hasReleaseNotes = false }) => {
+  React.useEffect(() => {
+    const handleEscape = (event: KeyboardEvent) => {
+      if (!enableShortcuts || event.repeat) return;
+      if (matchesModifiers(false, event) && matchesKeyCode('Escape', event)) {
+        event.preventDefault();
+        onClose();
+      }
+    };
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, []);
+
+  return (
+    <Fragment>
+      <FlexBar border>
+        <TabBar role="tablist">
+          <TabBarButton id="about" title="About" changeTab={changeTab} />
+          {hasReleaseNotes && (
+            <TabBarButton id="release-notes" title="Release notes" changeTab={changeTab} />
+          )}
+          <TabBarButton id="shortcuts" title="Keyboard shortcuts" changeTab={changeTab} />
+        </TabBar>
         <IconButton
           onClick={(e: SyntheticEvent) => {
             e.preventDefault();
             return onClose();
           }}
+          title="Close settings page"
         >
           <Icons icon="close" />
         </IconButton>
-      }
-    >
-      <div id={ABOUT} title="About">
-        <Route path={ABOUT}>
-          <AboutPage key={ABOUT} onClose={onClose} />
+      </FlexBar>
+      <Content vertical horizontal={false}>
+        <Route path="about">
+          <AboutPage key="about" />
         </Route>
-      </div>
-
-      <div id={RELEASE_NOTES} title="Release notes">
-        <Route path={RELEASE_NOTES}>
-          <ReleaseNotesPage key={RELEASE_NOTES} onClose={onClose} />
+        <Route path="release-notes">
+          <ReleaseNotesPage key="release-notes" />
         </Route>
-      </div>
-
-      <div id={SHORTCUTS} title="Keyboard shortcuts">
-        <Route path={SHORTCUTS}>
-          <ShortcutsPage key={SHORTCUTS} onClose={onClose} />
+        <Route path="shortcuts">
+          <ShortcutsPage key="shortcuts" />
         </Route>
-      </div>
-    </Tabs>
-  </Wrapper>
-);
+      </Content>
+    </Fragment>
+  );
+};
 
 const SettingsPages: FunctionComponent = () => {
   const api = useStorybookApi();
+  const state = useStorybookState();
   const changeTab = (tab: string) => api.changeSettingsTab(tab);
 
   return (
-    <Location key="location.consumer">
-      {(locationData) => (
-        <PureSettingsPages
-          activeTab={locationData.storyId}
-          changeTab={changeTab}
-          onClose={api.closeSettings}
-        />
-      )}
-    </Location>
+    <Pages
+      hasReleaseNotes={!!api.releaseNotesVersion()}
+      enableShortcuts={state.ui.enableShortcuts}
+      changeTab={changeTab}
+      onClose={api.closeSettings}
+    />
   );
 };
 

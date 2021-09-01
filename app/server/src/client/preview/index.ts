@@ -1,22 +1,25 @@
 import { start } from '@storybook/core/client';
-import { ClientStoryApi, Loadable } from '@storybook/addons';
+import { ClientStoryApi, Loadable, StoryFn, Args } from '@storybook/addons';
 
 import './globals';
-import { renderMain as render, setFetchStoryHtml } from './render';
-import { StoryFnServerReturnType, IStorybookSection, ConfigureOptionsArgs } from './types';
+import { renderMain as render } from './render';
+import { StoryFnServerReturnType, IStorybookSection } from './types';
 
 const framework = 'server';
 
 interface ClientApi extends ClientStoryApi<StoryFnServerReturnType> {
   setAddon(addon: any): void;
-  configure(loader: Loadable, module: NodeModule, options?: ConfigureOptionsArgs): void;
+  configure(loader: Loadable, module: NodeModule): void;
   getStorybook(): IStorybookSection[];
   clearDecorators(): void;
   forceReRender(): void;
   raw: () => any; // todo add type
 }
 
+const globalRender: StoryFn = (args: Args) => {};
+
 const api = start(render);
+api.clientApi.globalRender = globalRender;
 
 export const storiesOf: ClientApi['storiesOf'] = (kind, m) => {
   return (api.clientApi.storiesOf(kind, m) as ReturnType<ClientApi['storiesOf']>).addParameters({
@@ -24,20 +27,14 @@ export const storiesOf: ClientApi['storiesOf'] = (kind, m) => {
   });
 };
 
-const setRenderFetchAndConfigure: ClientApi['configure'] = (loader, module, options) => {
-  if (options && options.fetchStoryHtml) {
-    setFetchStoryHtml(options.fetchStoryHtml);
-  }
-  api.configure(loader, module, framework);
-};
-
-export const configure: ClientApi['configure'] = setRenderFetchAndConfigure;
+export const configure: ClientApi['configure'] = (...args) => api.configure(framework, ...args);
 export const {
   addDecorator,
   addParameters,
   clearDecorators,
   setAddon,
-  forceReRender,
   getStorybook,
   raw,
 } = api.clientApi;
+
+export const { forceReRender } = api;

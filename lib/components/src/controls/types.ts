@@ -6,22 +6,19 @@ export interface ControlProps<T> {
   value?: T;
   defaultValue?: T;
   argType?: ArgType;
-  onChange: (name: string, value: T) => T | void;
+  onChange: (value: T) => T | void;
   onFocus?: (evt: any) => void;
   onBlur?: (evt: any) => void;
-}
-
-export type ArrayValue = string[] | readonly string[];
-export interface ArrayConfig {
-  separator?: string;
 }
 
 export type BooleanValue = boolean;
 export interface BooleanConfig {}
 
 export type ColorValue = string;
+export type PresetColor = ColorValue | { color: ColorValue; title?: string };
 export interface ColorConfig {
-  presetColors?: string[];
+  presetColors?: PresetColor[];
+  startOpen?: boolean;
 }
 
 export type DateValue = Date | number;
@@ -54,6 +51,7 @@ export type OptionsControlType =
   | 'multi-select';
 
 export interface OptionsConfig {
+  labels: Record<any, string>;
   options: Options;
   type: OptionsControlType;
 }
@@ -77,7 +75,6 @@ export type ControlType =
   | 'text';
 
 export type Control =
-  | ArrayConfig
   | BooleanConfig
   | ColorConfig
   | DateConfig
